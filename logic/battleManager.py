@@ -1,3 +1,4 @@
+import math
 import random
 
 
@@ -22,10 +23,11 @@ class battleManager:
         """ 戰鬥邏輯 """
         self.genQueue()
         while(not self.isBattleEnd):
-            self.log.append("===== 回合{} =====".format(self.round))
-            self.round += 1
             actor = self.getNextActor()
-            # self.useItem(actor)
+            self.log.append(
+                "\n==> R{}, {} 的回合 <==".format(self.round, actor['name']))
+            self.round += 1
+            self.useItem(actor)
             # self.useSkill(actor)
             self.doAttack(actor)
             # self.rollEvent(actor)
@@ -43,13 +45,21 @@ class battleManager:
         """ 取得下一個行動者 """
         actor = self.queue.pop(0)
         self.queue.append(actor)
-
-        self.log.append("{} 的回合".format(actor["name"]))
         return actor
 
     def useItem(self, actor):
         """ 使用道具 """
-        pass
+        if(actor['discordId'] == 0):  # 玩家才用道具
+            return
+        if(random.random() < 0.5):
+            return
+
+        regen = math.floor(actor['maxHealth'] * 0.33)
+        actor['health'] += regen
+        if(actor['health'] > actor['maxHealth']):
+            actor['health'] = actor['maxHealth']
+        self.log.append("{} 嗑藥，回復了 {} HP".format(actor['name'], str(regen)))
+        return
 
     def useSkill(self, actor):
         """ 使用技能 """
@@ -66,6 +76,7 @@ class battleManager:
         range = random.random()*0.2 + 0.9
         damage = actor["attack"] - target["defence"]
         damage = int(max(damage, actor["attack"] * 0.1) * range)
+
         # 實際扣血
         target["health"] -= damage
         if(target["health"] < 0):
